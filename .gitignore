@@ -1,0 +1,4 @@
+dist/
+.DS_Store
+# The analytics web app URL, injected into release builds by scripts/package.sh. Never commit it.
+.analytics-url

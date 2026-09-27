@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ad Break Mute</title>
+<style>
+  :root {
+    --bg: #f3f6f2;
+    --ink: #14231b;
+    --pitch: #1f5c3f;
+    --ball: #b3261e;
+    --muted: #5e6b63;
+    --line: #d5ddd6;
+    --raise: #ffffff;
+    --figures: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1a14;
+      --ink: #e6eee8;
+      --pitch: #4fa37a;
+      --ball: #e0564b;
+      --muted: #93a39a;
+      --line: #25352c;
+      --raise: #16241c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; width: 320px; background: var(--bg); color: var(--ink);
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  [hidden] { display: none !important; }
+  main { display: flow-root; } /* keep the last block's bottom margin inside the popup */
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--pitch); outline-offset: 2px; border-radius: 4px; }
+
+  header { display: flex; align-items: center; gap: 10px; padding: 14px 16px 12px; }
+  h1 { font-size: 14px; font-weight: 650; margin: 0; letter-spacing: -0.01em; flex: 1; }
+  .icon-btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; color: var(--muted); }
+  .icon-btn:hover { background: var(--line); color: var(--ink); }
+  .text-btn { color: var(--pitch); font-weight: 600; padding: 4px 2px; }
+
+  /* switch */
+  .switch { position: relative; width: 36px; height: 20px; flex: none; }
+  .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .switch span { position: absolute; inset: 0; border-radius: 10px; background: var(--line); transition: background .15s; }
+  .switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+  .switch input:checked + span { background: var(--pitch); }
+  .switch input:checked + span::after { transform: translateX(16px); }
+  .switch input:focus-visible + span { outline: 2px solid var(--pitch); outline-offset: 2px; }
+
+  /* status */
+  .status { padding: 2px 16px 16px; }
+  .state { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  .status[data-mode="listening"] .dot { background: var(--pitch); }
+  .status[data-mode="muted"] .dot { background: var(--ball); }
+  .sub { margin: 3px 0 0 16px; color: var(--muted); }
+  .countdown { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 0 16px; }
+  .countdown b { font-family: var(--figures); font-size: 44px; line-height: 1; font-weight: 700; color: var(--ball); letter-spacing: -0.03em; }
+  .countdown span { color: var(--muted); }
+  .status .text-btn { margin: 8px 0 0 14px; color: var(--ball); }
+
+  /* this match / show */
+  .stream { padding: 14px 16px 14px; border-top: 1px solid var(--line); }
+  .stream-title { margin: 0 0 8px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score { display: flex; flex-wrap: wrap; column-gap: 16px; row-gap: 2px; margin: 0; }
+  .score div { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+  .score b { font-family: var(--figures); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  .score span { color: var(--muted); }
+  .brands { margin: 8px 0 0; color: var(--muted); }
+  .brands strong { color: var(--ink); font-weight: 500; }
+
+  .consent { margin: 0 16px 14px; padding: 12px 14px; background: var(--raise); border: 1px solid var(--line); border-radius: 10px; }
+  .consent-title { margin: 0; font-weight: 600; }
+  .consent-text { margin: 3px 0 10px; color: var(--muted); }
+  .consent-actions { display: flex; align-items: center; gap: 14px; }
+  .primary { background: var(--pitch); color: #fff; font-weight: 600; padding: 6px 12px; border-radius: 7px; }
+  @media (prefers-color-scheme: dark) { .primary { color: #0f1a14; } }
+  .consent .text-btn { color: var(--muted); font-weight: 500; }
+
+  .alltime { margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+  /* settings */
+  .group { padding: 4px 16px 10px; }
+  .group h2 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 6px 0 2px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .group h2 + .row { border-top: 0; }
+  .row label { flex: 1; cursor: pointer; }
+  .row small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .row.nested { padding-left: 12px; border-top: 0; padding-top: 0; }
+  .stepper { display: flex; align-items: center; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; flex: none; }
+  .stepper button { width: 28px; height: 28px; font-size: 16px; line-height: 1; color: var(--muted); }
+  .stepper button:hover { color: var(--ink); }
+  .stepper button:disabled { opacity: .35; cursor: default; }
+  .stepper output { min-width: 38px; text-align: center; font-family: var(--figures); font-weight: 600; }
+  .settings-foot { padding: 6px 16px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .quiet { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; font-size: 12px; }
+  .quiet:hover { color: var(--ink); }
+  .quiet[data-confirm="1"] { color: var(--ball); }
+
+  @media (prefers-reduced-motion: reduce) { .switch span, .switch span::after { transition: none; } }
+</style>
+</head>
+<body>
+  <main id="main-view">
+    <header>
+      <h1>Ad Break Mute</h1>
+      <label class="switch" title="Mute ads">
+        <input type="checkbox" id="enabled" aria-label="Mute ads">
+        <span></span>
+      </label>
+      <button class="icon-btn" id="open-settings" aria-label="Settings" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M2 4h7M12 4h2M2 12h2M7 12h7"/><circle cx="10.5" cy="4" r="1.5"/><circle cx="5.5" cy="12" r="1.5"/>
+        </svg>
+      </button>
+    </header>
+    <section class="status" id="status" aria-live="polite"></section>
+    <section class="consent" id="consent" hidden>
+      <p class="consent-title" id="consent-title">Help improve Ad Break Mute?</p>
+      <p class="consent-text" id="consent-text">Share anonymous stats: ad lengths, which sites and settings you use. Never what you watch or who you are.</p>
+      <div class="consent-actions">
+        <button class="primary" id="consent-yes">Share stats</button>
+        <button class="text-btn" id="consent-no">No thanks</button>
+      </div>
+    </section>
+    <section class="stream" id="stream" hidden></section>
+    <p class="alltime" id="alltime" hidden></p>
+  </main>
+
+  <main id="settings-view" hidden>
+    <header>
+      <h1>Settings</h1>
+      <button class="text-btn" id="close-settings">Done</button>
+    </header>
+
+    <section class="group">
+      <h2>While an ad plays</h2>
+      <div class="row">
+        <label for="overlay">Cover the video with a countdown</label>
+        <span class="switch"><input type="checkbox" id="overlay"><span></span></span>
+      </div>
+      <div class="row">
+        <label for="speedThrough">Speed through ads
+          <small>Prime Video only. This goes against Prime Video's terms of use.</small>
+        </label>
+        <span class="switch"><input type="checkbox" id="speedThrough"><span></span></span>
+      </div>
+      <div class="row nested" id="speed-row">
+        <label>Speed</label>
+        <div class="stepper" data-key="speedRate" data-min="2" data-max="16" data-step="1" data-unit="×">
+          <button data-dir="-1" aria-label="Slower">−</button><output></output><button data-dir="1" aria-label="Faster">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>When the ad ends</h2>
+      <div class="row">
+        <label>Wait before sound returns</label>
+        <div class="stepper" data-key="extraSeconds" data-min="0" data-max="10" data-step="0.5" data-unit="s">
+          <button data-dir="-1" aria-label="Less">−</button><output></output><button data-dir="1" aria-label="More">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="alertWhenAway">Chime and notify me if I'm on another tab</label>
+        <span class="switch"><input type="checkbox" id="alertWhenAway"><span></span></span>
+      </div>
+    </section>
+
+    <section class="group" id="privacy-group" hidden>
+      <h2>Privacy</h2>
+      <div class="row">
+        <label for="analytics">Share anonymous stats
+          <small>Ad lengths, sites and settings. Never what you watch or who you are.</small>
+        </label>
+        <span class="switch"><input type="checkbox" id="analytics"><span></span></span>
+      </div>
+    </section>
+
+    <div class="settings-foot">
+      <button class="quiet" id="reset">Reset ad stats</button>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
