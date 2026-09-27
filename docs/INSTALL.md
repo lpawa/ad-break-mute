@@ -5,8 +5,7 @@ It doesn't work on phones, tablets or TVs.
 
 ## 1. Download it
 
-1. Go to this repo's [Releases](../../../releases) page. The repo is private, so sign in to GitHub with the account
-   that was invited.
+1. Go to this repo's [Releases](../../../releases) page. No GitHub account needed.
 2. Under the newest release, click **Assets**, then `ad-break-mute-<version>.zip`.
 3. Unzip it (double-click on a Mac). You'll get a folder called `ad-break-mute`.
 4. Move that folder somewhere permanent, such as `Documents`. Chrome runs the extension from this folder, so if you
